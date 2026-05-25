@@ -802,7 +802,7 @@ async function loginBio(){
     });
     if(assr){
       const loc = await getLocation();
-await fetch(`${API}?action=logLogin&userId=${enc(lUid)}&userName=${enc(lName)}&lat=${enc(loc.lat)}&lng=${enc(loc.lng)}&address=${enc(loc.address)}`);
+await fetch(`${API}?action=logLogin&userId=${enc(lUid)}&userName=${enc(lName)}&lat=${enc(loc.lat)}&lng=${enc(loc.lng)});
       setSt('l-status','✅ Identity verified! Loading dashboard...','success');
 
       // fetch full profile for email/phone
@@ -918,7 +918,8 @@ setSt('r-status', `📍 ${testLoc.address || 'No location'} — Saving...`, 'inf
      + `&userId=${enc(rUid)}&userName=${enc(rName)}`
      + `&email=${enc(rEmail)}&phone=${enc(rPhone)}`
      + `&credentialId=${enc(credId)}&publicKey=${enc(pubKey)}`
-     + `&lat=${enc(loc.lat)}&lng=${enc(loc.lng)}&address=${enc(loc.address)}`;
+     + `&lat=${enc(loc.lat)}&lng=${enc(loc.lng)}
+       `;
     const res=await fetch(url);
     const data=await res.json();
 
@@ -976,49 +977,17 @@ if(!window.PublicKeyCredential){
 function getLocation() {
   return new Promise((resolve) => {
     if (!navigator.geolocation) {
-      resolve({ lat: '', lng: '', address: 'Geolocation not supported' });
+      resolve({ lat: '', lng: '' });
       return;
     }
     navigator.geolocation.getCurrentPosition(
-      async pos => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        try {
-          const r = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
-            { 
-              headers: { 
-                'Accept-Language': 'en',
-                'User-Agent': 'SecureAccessApp/1.0'
-              },
-              signal: AbortSignal.timeout(8000)
-            }
-          );
-          const d = await r.json();
-         
-          const a = d.address || {};
-          const parts = [
-           a.road || a.pedestrian || a.footway || '',
-           a.neighbourhood || a.quarter || a.hamlet || '',
-           a.suburb || a.village || '',
-           a.city_district || a.county || '',
-           a.city || a.town || '',
-           a.state || ''
-         ].filter(Boolean);
-         // Remove duplicates
-         const unique = [...new Set(parts)];
-         const address = unique.join(', ') || d.display_name || `${lat},${lng}`;
-        
-          resolve({ lat, lng, address });
-        } catch(e) {
-         
-          // fallback — just store coordinates if reverse geocoding fails
-          resolve({ lat, lng, address: `${lat}, ${lng}` });
-        }
-      },
+      pos => resolve({ 
+        lat: pos.coords.latitude, 
+        lng: pos.coords.longitude 
+      }),
       (err) => {
-    
-        resolve({ lat: '', lng: '', address: '' });
+        console.error('Geolocation error:', err.message);
+        resolve({ lat: '', lng: '' });
       },
       { timeout: 12000, enableHighAccuracy: true }
     );
