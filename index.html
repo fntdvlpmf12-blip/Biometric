@@ -910,8 +910,6 @@ async function doRegister(){
     document.getElementById('r-box-ico').textContent='✅';
     document.getElementById('r-box-ttl').textContent='Captured!';
     document.getElementById('r-box-dsc').textContent='Saving to your account...';
-    const testLoc = await getLocation();
-setSt('r-status', `📍 ${testLoc.address || 'No location'} — Saving...`, 'info');
    
    const loc = await getLocation();
    const url = `${API}?action=register`
