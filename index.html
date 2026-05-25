@@ -802,7 +802,7 @@ async function loginBio(){
     });
     if(assr){
       const loc = await getLocation();
-await fetch(`${API}?action=logLogin&userId=${enc(lUid)}&userName=${enc(lName)}&lat=${enc(loc.lat)}&lng=${enc(loc.lng)});
+await fetch(`${API}?action=logLogin&userId=${enc(lUid)}&userName=${enc(lName)}&lat=${enc(loc.lat)}&lng=${enc(loc.lng)}`);
       setSt('l-status','✅ Identity verified! Loading dashboard...','success');
 
       // fetch full profile for email/phone
@@ -918,8 +918,7 @@ setSt('r-status', `📍 ${testLoc.address || 'No location'} — Saving...`, 'inf
      + `&userId=${enc(rUid)}&userName=${enc(rName)}`
      + `&email=${enc(rEmail)}&phone=${enc(rPhone)}`
      + `&credentialId=${enc(credId)}&publicKey=${enc(pubKey)}`
-     + `&lat=${enc(loc.lat)}&lng=${enc(loc.lng)}
-       `;
+     + `&lat=${enc(loc.lat)}&lng=${enc(loc.lng)}`;
     const res=await fetch(url);
     const data=await res.json();
 
