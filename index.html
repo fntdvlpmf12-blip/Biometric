@@ -983,7 +983,6 @@ function getLocation() {
       async pos => {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
-        console.log('Got coords:', lat, lng); // debug
         try {
           const r = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
@@ -996,7 +995,7 @@ function getLocation() {
             }
           );
           const d = await r.json();
-          console.log('Nominatim response:', d); // debug
+         
           const a = d.address || {};
           const parts = [
             a.neighbourhood || a.quarter || a.hamlet || a.road || '',
@@ -1005,16 +1004,16 @@ function getLocation() {
             a.state || ''
           ].filter(Boolean);
           const address = parts.join(', ') || d.display_name || `${lat},${lng}`;
-          console.log('Final address:', address); // debug
+        
           resolve({ lat, lng, address });
         } catch(e) {
-          console.error('Nominatim failed:', e);
+         
           // fallback — just store coordinates if reverse geocoding fails
           resolve({ lat, lng, address: `${lat}, ${lng}` });
         }
       },
       (err) => {
-        console.error('Geolocation error:', err.code, err.message);
+    
         resolve({ lat: '', lng: '', address: '' });
       },
       { timeout: 12000, enableHighAccuracy: true }
