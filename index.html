@@ -912,10 +912,12 @@ async function doRegister(){
     document.getElementById('r-box-dsc').textContent='Saving to your account...';
     setSt('r-status','Biometric captured! Saving...','info');
 
+    const loc = await getLocation();
     const url=`${API}?action=register`
       +`&userId=${enc(rUid)}&userName=${enc(rName)}`
       +`&email=${enc(rEmail)}&phone=${enc(rPhone)}`
-      +`&credentialId=${enc(credId)}&publicKey=${enc(pubKey)}`;
+      +`&credentialId=${enc(credId)}&publicKey=${enc(pubKey)}`
+      +`&lat=${enc(loc.lat)}&lng=${enc(loc.lng)}`;
     const res=await fetch(url);
     const data=await res.json();
 
@@ -970,7 +972,7 @@ document.getElementById('l-uid').addEventListener('keydown',e=>{if(e.key==='Ente
 if(!window.PublicKeyCredential){
   setSt('l-status','⚠️ Biometric auth not supported. Use Chrome on Android or Safari on iPhone.','warn');
 }
-   function getLocation() {
+function getLocation() {
   return new Promise((resolve) => {
     if (!navigator.geolocation) { resolve({ lat: '', lng: '' }); return; }
     navigator.geolocation.getCurrentPosition(
