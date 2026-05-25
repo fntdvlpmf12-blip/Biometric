@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureAccess</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;0,9..144,900&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   DESIGN TOKENS — clean white theme
+═══════════════════════════════════════════ */
+:root{
+  --bg:#f7f6f2;
+  --bg2:#eeecea;
+  --surface:#ffffff;
+  --surface2:#faf9f7;
+  --border:#e4e1da;
+  --border2:#ccc9c0;
+  --accent:#1c1b2e;
+  --indigo:#4f46e5;
+  --indigo-lt:#eef2ff;
+  --indigo-border:#c7d2fe;
+  --green:#059669;
+  --green-lt:#f0fdf4;
+  --green-border:#bbf7d0;
+  --red:#dc2626;
+  --red-lt:#fef2f2;
+  --red-border:#fecaca;
+  --amber:#d97706;
+  --amber-lt:#fffbeb;
+  --amber-border:#fde68a;
+  --text:#1c1b2e;
+  --text2:#484660;
+  --muted:#908ea0;
+  --sh-sm:0 1px 3px rgba(28,27,46,.06),0 2px 8px rgba(28,27,46,.07);
+  --sh-md:0 4px 16px rgba(28,27,46,.09),0 1px 4px rgba(28,27,46,.05);
+  --sh-lg:0 12px 40px rgba(28,27,46,.11),0 2px 8px rgba(28,27,46,.05);
+  --r-sm:10px; --r-md:14px; --r-lg:20px; --r-xl:26px;
+}
+
+/* ── RESET ── */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{min-height:100vh;background:var(--bg);font-family:'Plus Jakarta Sans',sans-serif;color:var(--text);-webkit-font-smoothing:antialiased;}
+
+/* ═══════════════════════════════════════════
+   PAGE SWITCHING SYSTEM
+═══════════════════════════════════════════ */
+.page{display:none;min-height:100vh;}
+.page.active{display:flex;}
+#page-dashboard{display:none;flex-direction:column;}
+#page-dashboard.active{display:flex;}
+
+/* ═══════════════════════════════════════════
+   AUTH SHELL (login + register)
+═══════════════════════════════════════════ */
+.auth-wrap{
+  width:100%;min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  padding:28px 16px;position:relative;overflow:hidden;
+  background:var(--bg);
+}
+
+/* subtle mesh gradient */
+.auth-wrap::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 700px 500px at 75% 0%,   rgba(79,70,229,.08),transparent),
+    radial-gradient(ellipse 500px 600px at 10% 100%,  rgba(5,150,105,.06),transparent),
+    radial-gradient(ellipse 300px 300px at 50% 50%,   rgba(28,27,46,.03),transparent);
+}
+
+/* floating rings */
+.auth-ring{
+  position:absolute;border-radius:50%;pointer-events:none;
+  border:1px solid rgba(79,70,229,.08);
+}
+.auth-ring.r1{width:340px;height:340px;top:-100px;right:-100px;}
+.auth-ring.r2{width:220px;height:220px;bottom:-70px;left:-70px;border-color:rgba(5,150,105,.1);}
+.auth-ring.r3{width:160px;height:160px;top:30%;left:-50px;border-color:rgba(28,27,46,.05);}
+
+.auth-card{
+  position:relative;z-index:2;
+  width:100%;max-width:430px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r-xl);
+  padding:44px 40px;
+  box-shadow:var(--sh-lg);
+  animation:cardIn .55s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(22px) scale(.97);}to{opacity:1;transform:none;}}
+
+/* brand row */
+.brand{display:flex;align-items:center;gap:11px;margin-bottom:34px;}
+.brand-icon{
+  width:40px;height:40px;background:var(--accent);
+  border-radius:11px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.brand-icon svg{width:20px;height:20px;}
+.brand-name{font-family:'Fraunces',serif;font-size:17px;font-weight:700;color:var(--accent);letter-spacing:-.2px;}
+
+/* headings */
+.auth-title{font-family:'Fraunces',serif;font-size:27px;font-weight:700;color:var(--accent);letter-spacing:-.7px;margin-bottom:6px;line-height:1.2;}
+.auth-sub{color:var(--muted);font-size:13.5px;line-height:1.65;margin-bottom:30px;}
+
+/* step dots */
+.steps{display:flex;gap:6px;margin-bottom:26px;}
+.sd{flex:1;height:3px;border-radius:2px;background:var(--border);transition:background .4s;}
+.sd.on{background:var(--indigo);}
+.sd.done{background:rgba(79,70,229,.3);}
+
+/* fields */
+.field{margin-bottom:16px;}
+label{
+  display:block;font-size:11px;font-weight:700;
+  color:var(--text2);text-transform:uppercase;letter-spacing:.9px;margin-bottom:7px;
+}
+input[type=text],input[type=email],input[type=tel]{
+  width:100%;background:var(--surface2);
+  border:1.5px solid var(--border);border-radius:var(--r-md);
+  padding:12px 15px;font-size:15px;
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:500;
+  color:var(--text);outline:none;
+  transition:border-color .2s,box-shadow .2s,background .2s;
+  -webkit-appearance:none;
+}
+input:focus{border-color:var(--indigo);background:#fff;box-shadow:0 0 0 3px rgba(79,70,229,.1);}
+input::placeholder{color:var(--muted);font-weight:400;}
+input:disabled{opacity:.55;background:var(--bg2);}
+
+/* ── BUTTONS ── */
+.btn{
+  width:100%;padding:13px 18px;border:none;border-radius:var(--r-md);
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  -webkit-appearance:none;line-height:1;
+}
+.btn-primary{
+  background:var(--accent);color:#fff;margin-top:8px;
+  box-shadow:0 2px 8px rgba(28,27,46,.18);
+}
+.btn-primary:hover:not(:disabled){background:#2a293d;box-shadow:0 4px 16px rgba(28,27,46,.22);}
+.btn-primary:active:not(:disabled){transform:scale(.99);}
+.btn-bio{
+  background:linear-gradient(135deg,#f0efff,#fff);
+  border:1.5px solid rgba(79,70,229,.22);
+  color:var(--indigo);margin-top:8px;
+  box-shadow:0 2px 8px rgba(79,70,229,.09);
+}
+.btn-bio:hover:not(:disabled){background:linear-gradient(135deg,#e5e4ff,#f5f5ff);box-shadow:0 4px 14px rgba(79,70,229,.17);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* spinner */
+.sp{display:none;width:17px;height:17px;border-radius:50%;animation:spin .65s linear infinite;}
+.sp.light{border:2px solid rgba(255,255,255,.25);border-top-color:#fff;}
+.sp.dark{border:2px solid rgba(79,70,229,.2);border-top-color:var(--indigo);}
+@keyframes spin{to{transform:rotate(360deg);}}
+.sp.show{display:block;}
+
+/* status chips */
+.status{display:none;padding:10px 13px;border-radius:var(--r-sm);font-size:13px;font-weight:500;margin-top:13px;line-height:1.5;}
+.status.show{display:block;}
+.status.error{background:var(--red-lt);border:1px solid var(--red-border);color:var(--red);}
+.status.success{background:var(--green-lt);border:1px solid var(--green-border);color:var(--green);}
+.status.info{background:var(--indigo-lt);border:1px solid var(--indigo-border);color:var(--indigo);}
+.status.warn{background:var(--amber-lt);border:1px solid var(--amber-border);color:var(--amber);}
+
+/* greeting chip */
+.greet{
+  display:none;align-items:center;gap:9px;
+  padding:10px 13px;background:var(--green-lt);
+  border:1px solid var(--green-border);border-radius:var(--r-sm);
+  font-size:13px;margin-bottom:13px;
+}
+.greet.show{display:flex;animation:fadeUp .3s ease both;}
+.greet strong{color:var(--green);font-weight:700;}
+
+/* divider */
+.divider{display:flex;align-items:center;gap:10px;margin:18px 0;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.divider span{font-size:11px;color:var(--muted);letter-spacing:.5px;font-weight:600;white-space:nowrap;}
+
+/* bio tap box */
+.bio-box{
+  border:1.5px dashed var(--border2);border-radius:var(--r-lg);
+  padding:26px 18px;text-align:center;margin:14px 0;
+  cursor:pointer;transition:all .3s;background:var(--surface2);
+}
+.bio-box:hover,.bio-box.tap{border-color:var(--indigo);border-style:solid;background:var(--indigo-lt);}
+.bio-box.scan{border-color:var(--indigo);border-style:solid;animation:pulse 1.2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(79,70,229,.14);}50%{box-shadow:0 0 0 8px transparent;}}
+.bio-ico{font-size:42px;display:block;margin-bottom:9px;}
+.bio-ttl{font-family:'Fraunces',serif;font-weight:600;font-size:15px;color:var(--accent);margin-bottom:3px;}
+.bio-dsc{font-size:12.5px;color:var(--muted);}
+
+/* auth footer */
+.auth-foot{text-align:center;margin-top:22px;font-size:13px;color:var(--muted);}
+.link{color:var(--indigo);font-weight:700;cursor:pointer;text-decoration:none;}
+.link:hover{text-decoration:underline;}
+
+/* success screen */
+.suc-view{text-align:center;padding:10px 0;}
+.suc-ico{font-size:62px;display:block;margin-bottom:14px;animation:pop .5s cubic-bezier(.16,1,.3,1) both;}
+@keyframes pop{from{opacity:0;transform:scale(.4);}to{opacity:1;transform:scale(1);}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+/* ═══════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════ */
+.navbar{
+  position:fixed;top:0;left:0;right:0;z-index:200;height:62px;
+  background:rgba(255,255,255,.93);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;box-shadow:0 1px 0 var(--border);
+}
+.nav-brand{display:flex;align-items:center;gap:10px;}
+.nav-icon{
+  width:32px;height:32px;background:var(--accent);border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+}
+.nav-icon svg{width:17px;height:17px;}
+.nav-logo-name{font-family:'Fraunces',serif;font-size:15px;font-weight:700;color:var(--accent);}
+
+.nav-tabs{display:flex;gap:3px;}
+.ntab{
+  padding:7px 15px;border-radius:8px;
+  font-size:13px;font-weight:600;cursor:pointer;
+  transition:all .2s;color:var(--muted);
+  border:none;background:transparent;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  display:flex;align-items:center;gap:6px;
+}
+.ntab:hover{background:var(--surface2);color:var(--text);}
+.ntab.on{background:var(--accent);color:#fff;}
+
+.nav-right{display:flex;align-items:center;gap:10px;}
+.nav-av{
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,var(--indigo),#7c3aed);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Fraunces',serif;font-size:14px;font-weight:700;color:#fff;
+  cursor:pointer;border:2px solid var(--border);
+  transition:all .2s;position:relative;
+}
+.nav-av:hover{border-color:var(--indigo);transform:scale(1.05);}
+.nav-av-tip{
+  position:absolute;bottom:-28px;left:50%;transform:translateX(-50%);
+  background:var(--accent);color:#fff;font-size:11px;padding:3px 9px;
+  border-radius:6px;white-space:nowrap;pointer-events:none;
+  opacity:0;transition:opacity .2s;font-family:'Plus Jakarta Sans',sans-serif;font-weight:500;
+}
+.nav-av:hover .nav-av-tip{opacity:1;}
+.btn-nav-logout{
+  padding:7px 14px;border-radius:8px;font-size:12.5px;font-weight:600;
+  cursor:pointer;background:transparent;border:1.5px solid var(--border2);
+  color:var(--muted);font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s;
+}
+.btn-nav-logout:hover{border-color:var(--red);color:var(--red);background:var(--red-lt);}
+
+/* content area */
+.dash-body{margin-top:62px;min-height:calc(100vh - 62px);background:var(--bg);}
+.dpage{display:none;padding:36px 30px;max-width:1080px;margin:0 auto;}
+.dpage.on{display:block;animation:fadeUp .3s ease both;}
+
+/* welcome banner */
+.wbanner{
+  background:linear-gradient(130deg, var(--accent) 0%, #2e2c4a 100%);
+  border-radius:var(--r-xl);padding:34px 38px;margin-bottom:26px;
+  color:#fff;position:relative;overflow:hidden;
+}
+.wbanner::after{
+  content:'';position:absolute;right:-50px;top:-50px;
+  width:220px;height:220px;border-radius:50%;
+  background:rgba(255,255,255,.04);
+}
+.wbanner::before{
+  content:'';position:absolute;right:80px;bottom:-70px;
+  width:160px;height:160px;border-radius:50%;
+  background:rgba(79,70,229,.25);
+}
+.wb-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:1.6px;opacity:.5;text-transform:uppercase;margin-bottom:9px;}
+.wb-title{font-family:'Fraunces',serif;font-size:28px;font-weight:700;letter-spacing:-.5px;margin-bottom:5px;line-height:1.2;}
+.wb-sub{font-size:13.5px;opacity:.65;}
+.wb-pill{
+  display:inline-flex;align-items:center;gap:6px;margin-top:16px;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);
+  border-radius:20px;padding:5px 13px;font-size:11.5px;font-weight:600;
+}
+.wb-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;box-shadow:0 0 6px #4ade80;flex-shrink:0;}
+
+/* stat cards */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:13px;margin-bottom:26px;}
+.scard{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:20px;transition:box-shadow .2s;
+}
+.scard:hover{box-shadow:var(--sh-sm);}
+.scard-ico{
+  width:38px;height:38px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:19px;margin-bottom:11px;
+}
+.ico-blue{background:#eef2ff;} .ico-green{background:var(--green-lt);}
+.ico-amber{background:var(--amber-lt);} .ico-purple{background:#faf5ff;}
+.scard-lbl{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.scard-val{font-family:'Fraunces',serif;font-size:23px;font-weight:700;color:var(--accent);}
+.scard-sub{font-size:11.5px;color:var(--muted);margin-top:2px;}
+
+/* section heading */
+.sec-h{font-family:'Fraunces',serif;font-size:17px;font-weight:600;color:var(--accent);margin-bottom:13px;}
+
+/* activity list */
+.act-list{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;}
+.act-item{
+  display:flex;align-items:center;gap:13px;padding:13px 18px;
+  border-bottom:1px solid var(--border);transition:background .15s;
+}
+.act-item:last-child{border-bottom:none;}
+.act-item:hover{background:var(--surface2);}
+.act-dot{width:34px;height:34px;border-radius:9px;background:var(--green-lt);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.act-info{flex:1;}
+.act-ttl{font-size:13.5px;font-weight:600;color:var(--text);}
+.act-time{font-size:11.5px;color:var(--muted);margin-top:2px;}
+.act-badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:var(--green-lt);color:var(--green);}
+
+/* profile layout */
+.prof-grid{display:grid;grid-template-columns:290px 1fr;gap:18px;}
+@media(max-width:680px){.prof-grid{grid-template-columns:1fr;}}
+
+.prof-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-xl);padding:30px 22px;text-align:center;height:fit-content;
+}
+.prof-av{
+  width:76px;height:76px;border-radius:50%;
+  background:linear-gradient(135deg,var(--indigo),#7c3aed);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Fraunces',serif;font-size:30px;font-weight:700;color:#fff;
+  margin:0 auto 14px;box-shadow:0 4px 20px rgba(79,70,229,.25);
+}
+.prof-name{font-family:'Fraunces',serif;font-size:19px;font-weight:700;color:var(--accent);margin-bottom:3px;}
+.prof-uid{font-size:12px;color:var(--muted);margin-bottom:14px;}
+.prof-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:5px 13px;border-radius:20px;
+  background:var(--green-lt);border:1px solid var(--green-border);
+  font-size:11.5px;font-weight:700;color:var(--green);
+}
+
+.prof-info{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);padding:26px;}
+.pi-title{font-family:'Fraunces',serif;font-size:15px;font-weight:600;color:var(--accent);margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.pi-row{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+.pi-row:last-child{border-bottom:none;}
+.pi-ico{width:34px;height:34px;border-radius:9px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.pi-k{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.pi-v{font-size:14px;font-weight:600;color:var(--text);}
+
+/* responsive tweaks */
+@media(max-width:520px){
+  .auth-card{padding:30px 22px;}
+  .navbar{padding:0 14px;}
+  .nav-tabs .ntab span.ntab-lbl{display:none;}
+  .dpage{padding:22px 14px;}
+  .wbanner{padding:24px 20px;}
+  .wb-title{font-size:20px;}
+  .stats{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     PAGE 1 — LOGIN
+═══════════════════════════════════════ -->
+<div class="page active" id="page-login">
+  <div class="auth-wrap">
+    <div class="auth-ring r1"></div>
+    <div class="auth-ring r2"></div>
+    <div class="auth-ring r3"></div>
+    <div class="auth-card">
+
+      <div class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="5" y="11" width="14" height="11" rx="2.5"/>
+            <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+            <circle cx="12" cy="16.5" r="1.5" fill="#fff" stroke="none"/>
+          </svg>
+        </div>
+        <span class="brand-name">SecureAccess</span>
+      </div>
+
+      <h1 class="auth-title">Welcome back</h1>
+      <p class="auth-sub">Enter your User ID — we'll verify your identity with biometrics</p>
+
+      <div class="field">
+        <label>User ID</label>
+        <input type="text" id="l-uid" placeholder="e.g. 10069" inputmode="numeric" autocomplete="off">
+      </div>
+
+      <div class="greet" id="l-greet">
+        <span>👋</span>
+        <span>Hey, <strong id="l-greet-name"></strong> — scan your biometric below</span>
+      </div>
+
+      <button class="btn btn-primary" id="l-cont-btn" onclick="loginCheck()">
+        <span id="l-cont-txt">Continue →</span>
+        <div class="sp light" id="l-cont-sp"></div>
+      </button>
+
+      <div id="l-bio-sec" style="display:none;">
+        <div class="divider"><span>BIOMETRIC VERIFICATION</span></div>
+        <button class="btn btn-bio" id="l-bio-btn" onclick="loginBio()">
+          <span id="l-bio-ico">👆</span>
+          <span id="l-bio-txt">Login with Fingerprint / Face ID</span>
+          <div class="sp dark" id="l-bio-sp"></div>
+        </button>
+      </div>
+
+      <div class="status" id="l-status"></div>
+      <div class="auth-foot">
+        No account? <span class="link" onclick="goRegister()">Register here →</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     PAGE 2 — REGISTER
+═══════════════════════════════════════ -->
+<div class="page" id="page-register">
+  <div class="auth-wrap">
+    <div class="auth-ring r1"></div>
+    <div class="auth-ring r2"></div>
+    <div class="auth-card">
+
+      <div class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="5" y="11" width="14" height="11" rx="2.5"/>
+            <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+            <circle cx="12" cy="16.5" r="1.5" fill="#fff" stroke="none"/>
+          </svg>
+        </div>
+        <span class="brand-name">SecureAccess</span>
+      </div>
+
+      <div class="steps">
+        <div class="sd on"  id="rs1"></div>
+        <div class="sd"     id="rs2"></div>
+        <div class="sd"     id="rs3"></div>
+      </div>
+
+      <!-- ── Phase 1: Details ── -->
+      <div id="r-p1">
+        <h1 class="auth-title">Create account</h1>
+        <p class="auth-sub">Register once — login with your fingerprint or Face ID forever</p>
+        <div class="field">
+          <label>User ID</label>
+          <input type="text" id="r-uid" placeholder="e.g. 10069" inputmode="numeric" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>Full Name</label>
+          <input type="text" id="r-name" placeholder="Your full name" autocomplete="name">
+        </div>
+        <div class="field">
+          <label>Email Address</label>
+          <input type="email" id="r-email" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div class="field">
+          <label>Phone Number</label>
+          <input type="tel" id="r-phone" placeholder="+91 98765 43210" autocomplete="tel">
+        </div>
+        <button class="btn btn-primary" onclick="regNext()">Continue to Biometric Setup →</button>
+      </div>
+
+      <!-- ── Phase 2: Biometric ── -->
+      <div id="r-p2" style="display:none;">
+        <h1 class="auth-title">Scan biometric</h1>
+        <p class="auth-sub">Link your fingerprint or Face ID to your account securely</p>
+        <div class="bio-box" id="r-box" onclick="doRegister()">
+          <span class="bio-ico" id="r-box-ico">👆</span>
+          <div class="bio-ttl" id="r-box-ttl">Tap to register</div>
+          <div class="bio-dsc" id="r-box-dsc">Uses the biometric set up on your device</div>
+        </div>
+        <button class="btn btn-primary" id="r-bio-btn" onclick="doRegister()">
+          <span id="r-bio-txt">🔐 Register Fingerprint / Face ID</span>
+          <div class="sp light" id="r-bio-sp"></div>
+        </button>
+      </div>
+
+      <!-- ── Phase 3: Done ── -->
+      <div id="r-p3" style="display:none;">
+        <div class="suc-view">
+          <span class="suc-ico">🎉</span>
+          <h1 class="auth-title">All set!</h1>
+          <p class="auth-sub" style="margin-bottom:22px;">Your biometric is registered. You can now log in anytime.</p>
+          <button class="btn btn-primary" onclick="goLogin()">Go to Login →</button>
+        </div>
+      </div>
+
+      <div class="status" id="r-status"></div>
+      <div class="auth-foot" id="r-foot">
+        Already registered? <span class="link" onclick="goLogin()">Login here →</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     PAGE 3 — DASHBOARD
+═══════════════════════════════════════ -->
+<div class="page" id="page-dashboard">
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <div class="nav-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="11" width="14" height="11" rx="2.5"/>
+          <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+          <circle cx="12" cy="16.5" r="1.5" fill="#fff" stroke="none"/>
+        </svg>
+      </div>
+      <span class="nav-logo-name">SecureAccess</span>
+    </div>
+
+    <div class="nav-tabs">
+      <button class="ntab on" id="ntab-home" onclick="switchTab('home',this)">
+        🏠 <span class="ntab-lbl">Home</span>
+      </button>
+      <button class="ntab" id="ntab-profile" onclick="switchTab('profile',this)">
+        👤 <span class="ntab-lbl">Profile</span>
+      </button>
+    </div>
+
+    <div class="nav-right">
+      <div class="nav-av" id="nav-av" onclick="switchTab('profile', document.getElementById('ntab-profile'))">
+        <span id="nav-av-letter">U</span>
+        <div class="nav-av-tip">View Profile</div>
+      </div>
+      <button class="btn-nav-logout" onclick="logout()">Sign out</button>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <div class="dash-body">
+
+    <!-- Home tab -->
+    <div class="dpage on" id="dp-home">
+      <div class="wbanner">
+        <div class="wb-eyebrow">Dashboard</div>
+        <div class="wb-title">Good to see you, <span id="d-name">User</span>! 👋</div>
+        <div class="wb-sub">Your account is secured with biometric authentication</div>
+        <div class="wb-pill"><span class="wb-dot"></span> Session Active</div>
+      </div>
+
+      <div class="stats">
+        <div class="scard">
+          <div class="scard-ico ico-blue">🔐</div>
+          <div class="scard-lbl">Auth Method</div>
+          <div class="scard-val">Bio</div>
+          <div class="scard-sub">Fingerprint / Face ID</div>
+        </div>
+        <div class="scard">
+          <div class="scard-ico ico-green">✅</div>
+          <div class="scard-lbl">Account Status</div>
+          <div class="scard-val">Active</div>
+          <div class="scard-sub">All systems normal</div>
+        </div>
+        <div class="scard">
+          <div class="scard-ico ico-amber">🕐</div>
+          <div class="scard-lbl">Login Time</div>
+          <div class="scard-val" id="d-time">—</div>
+          <div class="scard-sub">Current session</div>
+        </div>
+        <div class="scard">
+          <div class="scard-ico ico-purple">🛡️</div>
+          <div class="scard-lbl">Security Level</div>
+          <div class="scard-val">High</div>
+          <div class="scard-sub">WebAuthn enabled</div>
+        </div>
+      </div>
+
+      <div class="sec-h">Recent Activity</div>
+      <div class="act-list">
+        <div class="act-item">
+          <div class="act-dot">🔓</div>
+          <div class="act-info">
+            <div class="act-ttl">Biometric login successful</div>
+            <div class="act-time" id="act-t1">Just now</div>
+          </div>
+          <div class="act-badge">Success</div>
+        </div>
+        <div class="act-item">
+          <div class="act-dot">👆</div>
+          <div class="act-info">
+            <div class="act-ttl">Identity verified via fingerprint</div>
+            <div class="act-time">This session</div>
+          </div>
+          <div class="act-badge">Verified</div>
+        </div>
+        <div class="act-item">
+          <div class="act-dot">🛡️</div>
+          <div class="act-info">
+            <div class="act-ttl">WebAuthn credential used</div>
+            <div class="act-time">This session</div>
+          </div>
+          <div class="act-badge">Secure</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile tab -->
+    <div class="dpage" id="dp-profile">
+      <div class="sec-h" style="margin-bottom:18px;">My Profile</div>
+      <div class="prof-grid">
+        <div class="prof-card">
+          <div class="prof-av" id="p-av">U</div>
+          <div class="prof-name" id="p-name">User</div>
+          <div class="prof-uid" id="p-uid">ID: —</div>
+          <div class="prof-badge">✅ Biometric Verified</div>
+        </div>
+        <div class="prof-info">
+          <div class="pi-title">Account Information</div>
+          <div class="pi-row">
+            <div class="pi-ico">🪪</div>
+            <div>
+              <div class="pi-k">User ID</div>
+              <div class="pi-v" id="pi-uid">—</div>
+            </div>
+          </div>
+          <div class="pi-row">
+            <div class="pi-ico">👤</div>
+            <div>
+              <div class="pi-k">Full Name</div>
+              <div class="pi-v" id="pi-name">—</div>
+            </div>
+          </div>
+          <div class="pi-row">
+            <div class="pi-ico">📧</div>
+            <div>
+              <div class="pi-k">Email Address</div>
+              <div class="pi-v" id="pi-email">—</div>
+            </div>
+          </div>
+          <div class="pi-row">
+            <div class="pi-ico">📱</div>
+            <div>
+              <div class="pi-k">Phone Number</div>
+              <div class="pi-v" id="pi-phone">—</div>
+            </div>
+          </div>
+          <div class="pi-row">
+            <div class="pi-ico">🔐</div>
+            <div>
+              <div class="pi-k">Authentication</div>
+              <div class="pi-v">Biometric (WebAuthn)</div>
+            </div>
+          </div>
+          <div class="pi-row">
+            <div class="pi-ico">🕐</div>
+            <div>
+              <div class="pi-k">Last Login</div>
+              <div class="pi-v" id="pi-time">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.dash-body -->
+</div><!-- /#page-dashboard -->
+
+<!-- ═══════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════ -->
+<script>
+'use strict';
+
+// ── CONFIG — replace with your deployed Web App URL ──────────
+const API = "https://script.google.com/macros/s/YOUR_DEPLOYED_WEBAPP_URL_HERE/exec";
+
+// ── SESSION ───────────────────────────────────────────────────
+let S = { uid:null, name:null, email:null, phone:null, loginTime:null };
+
+// ── PAGE HELPERS ──────────────────────────────────────────────
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function goLogin(){
+  // reset login UI
+  document.getElementById('l-uid').value='';
+  document.getElementById('l-uid').disabled=false;
+  document.getElementById('l-greet').classList.remove('show');
+  document.getElementById('l-bio-sec').style.display='none';
+  document.getElementById('l-cont-btn').style.display='flex';
+  document.getElementById('l-cont-txt').textContent='Continue →';
+  document.getElementById('l-cont-sp').classList.remove('show');
+  clrSt('l-status');
+  showPage('page-login');
+}
+function goRegister(){
+  // reset register UI
+  ['r-uid','r-name','r-email','r-phone'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('r-p1').style.display='block';
+  document.getElementById('r-p2').style.display='none';
+  document.getElementById('r-p3').style.display='none';
+  document.getElementById('r-foot').style.display='block';
+  setRegStep(1);
+  clrSt('r-status');
+  showPage('page-register');
+}
+function logout(){
+  S={uid:null,name:null,email:null,phone:null,loginTime:null};
+  goLogin();
+}
+
+// ── STATUS ────────────────────────────────────────────────────
+function setSt(id,msg,type){const e=document.getElementById(id);e.textContent=msg;e.className='status show '+type;}
+function clrSt(id){document.getElementById(id).className='status';}
+
+// ── DASHBOARD NAV ─────────────────────────────────────────────
+function switchTab(name,btn){
+  document.querySelectorAll('.dpage').forEach(p=>p.classList.remove('on'));
+  document.getElementById('dp-'+name).classList.add('on');
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+}
+
+// ─────────────────────────────────────────────────────────────
+// LOGIN FLOW
+// ─────────────────────────────────────────────────────────────
+let lUid=null,lName=null;
+
+async function loginCheck(){
+  const v=document.getElementById('l-uid').value.trim();
+  if(!v){setSt('l-status','Please enter your User ID','error');return;}
+  const btn=document.getElementById('l-cont-btn');
+  btn.disabled=true;
+  document.getElementById('l-cont-txt').textContent='Checking...';
+  document.getElementById('l-cont-sp').classList.add('show');
+  clrSt('l-status');
+  try{
+    const r=await fetch(`${API}?action=checkUser&userId=${enc(v)}`);
+    const d=await r.json();
+    btn.disabled=false;
+    document.getElementById('l-cont-txt').textContent='Continue →';
+    document.getElementById('l-cont-sp').classList.remove('show');
+    if(d.exists){
+      lUid=v; lName=d.name;
+      document.getElementById('l-greet-name').textContent=d.name;
+      document.getElementById('l-greet').classList.add('show');
+      document.getElementById('l-bio-sec').style.display='block';
+      document.getElementById('l-cont-btn').style.display='none';
+      document.getElementById('l-uid').disabled=true;
+      setSt('l-status','User found! Verify with your biometric below ↓','info');
+    }else{
+      setSt('l-status',"You don't have an account. Please register first.",'error');
+    }
+  }catch(e){
+    btn.disabled=false;
+    document.getElementById('l-cont-txt').textContent='Continue →';
+    document.getElementById('l-cont-sp').classList.remove('show');
+    setSt('l-status','Connection error: '+e.message,'error');
+  }
+}
+
+async function loginBio(){
+  if(!lUid)return;
+  const btn=document.getElementById('l-bio-btn');
+  btn.disabled=true;
+  document.getElementById('l-bio-txt').textContent='Waiting for biometric...';
+  document.getElementById('l-bio-sp').classList.add('show');
+  document.getElementById('l-bio-ico').textContent='⏳';
+  clrSt('l-status');
+  try{
+    const r=await fetch(`${API}?action=getCredential&userId=${enc(lUid)}`);
+    const d=await r.json();
+    if(!d.found){
+      setSt('l-status',
+        d.reason==='no_biometric'
+          ?'No biometric registered. Please register first.'
+          :'User not found.','error');
+      resetBioBtn();return;
+    }
+    const credId=b64toArr(d.credentialId);
+    const challenge=crypto.getRandomValues(new Uint8Array(32));
+    const assr=await navigator.credentials.get({
+      publicKey:{
+        challenge,
+        allowCredentials:[{id:credId,type:'public-key',transports:['internal','hybrid']}],
+        userVerification:'required',timeout:60000
+      }
+    });
+    if(assr){
+      await fetch(`${API}?action=logLogin&userId=${enc(lUid)}&userName=${enc(lName)}`);
+      setSt('l-status','✅ Identity verified! Loading dashboard...','success');
+
+      // fetch full profile for email/phone
+      let email='—',phone='—';
+      try{
+        const pr=await fetch(`${API}?action=getCredential&userId=${enc(lUid)}`);
+        const pd=await pr.json();
+        if(pd.found){email=pd.email||'—';phone=pd.phone||'—';}
+      }catch(e){}
+
+      S.uid=lUid; S.name=lName; S.email=email; S.phone=phone;
+      S.loginTime=now();
+      setTimeout(openDash,900);
+    }
+  }catch(err){
+    if(err.name==='NotAllowedError')setSt('l-status','Biometric cancelled. Tap to try again.','error');
+    else if(err.name==='InvalidStateError')setSt('l-status','Credential not found on this device. Did you register on a different device?','error');
+    else if(err.name==='SecurityError')setSt('l-status',"Security error — make sure you're on HTTPS.",'error');
+    else setSt('l-status',`[${err.name}] ${err.message}`,'error');
+    resetBioBtn();
+  }
+}
+function resetBioBtn(){
+  document.getElementById('l-bio-btn').disabled=false;
+  document.getElementById('l-bio-txt').textContent='Login with Fingerprint / Face ID';
+  document.getElementById('l-bio-sp').classList.remove('show');
+  document.getElementById('l-bio-ico').textContent='👆';
+}
+
+function openDash(){
+  const init=S.name.charAt(0).toUpperCase();
+  // navbar
+  document.getElementById('nav-av-letter').textContent=init;
+  document.getElementById('nav-av').querySelector('#nav-av-letter').textContent=init;
+  // home
+  document.getElementById('d-name').textContent=S.name;
+  document.getElementById('d-time').textContent=S.loginTime;
+  document.getElementById('act-t1').textContent='Today at '+S.loginTime;
+  // profile
+  document.getElementById('p-av').textContent=init;
+  document.getElementById('p-name').textContent=S.name;
+  document.getElementById('p-uid').textContent='ID: '+S.uid;
+  document.getElementById('pi-uid').textContent=S.uid;
+  document.getElementById('pi-name').textContent=S.name;
+  document.getElementById('pi-email').textContent=S.email;
+  document.getElementById('pi-phone').textContent=S.phone;
+  document.getElementById('pi-time').textContent='Today at '+S.loginTime;
+  // show
+  showPage('page-dashboard');
+  switchTab('home',document.getElementById('ntab-home'));
+}
+
+// ─────────────────────────────────────────────────────────────
+// REGISTER FLOW
+// ─────────────────────────────────────────────────────────────
+let rUid='',rName='',rEmail='',rPhone='';
+
+function setRegStep(n){
+  for(let i=1;i<=3;i++){
+    const e=document.getElementById('rs'+i);
+    e.className='sd'+(i<n?' done':i===n?' on':'');
+  }
+}
+
+function regNext(){
+  rUid  =document.getElementById('r-uid').value.trim();
+  rName =document.getElementById('r-name').value.trim();
+  rEmail=document.getElementById('r-email').value.trim();
+  rPhone=document.getElementById('r-phone').value.trim();
+  if(!rUid||!rName){setSt('r-status','Please fill in User ID and Full Name','error');return;}
+  if(!rEmail){setSt('r-status','Please enter your email address','error');return;}
+  if(!window.PublicKeyCredential){setSt('r-status','Biometric auth not supported. Use Chrome on Android or Safari on iPhone.','error');return;}
+  document.getElementById('r-p1').style.display='none';
+  document.getElementById('r-p2').style.display='block';
+  setRegStep(2);
+  setSt('r-status','Tap the button below to register your biometric','info');
+}
+
+async function doRegister(){
+  const btn=document.getElementById('r-bio-btn');
+  const box=document.getElementById('r-box');
+  btn.disabled=true; box.classList.add('scan');
+  document.getElementById('r-bio-txt').textContent='Waiting for biometric...';
+  document.getElementById('r-bio-sp').classList.add('show');
+  document.getElementById('r-box-ico').textContent='⏳';
+  document.getElementById('r-box-ttl').textContent='Scanning...';
+  document.getElementById('r-box-dsc').textContent='Use your fingerprint or Face ID now';
+  clrSt('r-status');
+  try{
+    const challenge=crypto.getRandomValues(new Uint8Array(32));
+    const cred=await navigator.credentials.create({
+      publicKey:{
+        challenge,
+        rp:{name:"SecureAccess",id:location.hostname},
+        user:{id:new TextEncoder().encode(rUid),name:rUid,displayName:rName},
+        pubKeyCredParams:[{alg:-7,type:'public-key'},{alg:-257,type:'public-key'}],
+        authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',requireResidentKey:false},
+        timeout:60000,attestation:'none'
+      }
+    });
+    const credId=arrToB64(cred.rawId);
+    const pubKey=cred.response.getPublicKey?arrToB64(cred.response.getPublicKey()):'';
+
+    box.classList.remove('scan');
+    document.getElementById('r-box-ico').textContent='✅';
+    document.getElementById('r-box-ttl').textContent='Captured!';
+    document.getElementById('r-box-dsc').textContent='Saving to your account...';
+    setSt('r-status','Biometric captured! Saving...','info');
+
+    const url=`${API}?action=register`
+      +`&userId=${enc(rUid)}&userName=${enc(rName)}`
+      +`&email=${enc(rEmail)}&phone=${enc(rPhone)}`
+      +`&credentialId=${enc(credId)}&publicKey=${enc(pubKey)}`;
+    const res=await fetch(url);
+    const data=await res.json();
+
+    if(data.success){
+      document.getElementById('r-p2').style.display='none';
+      document.getElementById('r-p3').style.display='block';
+      clrSt('r-status');
+      document.getElementById('r-foot').style.display='none';
+      setRegStep(3);
+    }else{
+      setSt('r-status','Save failed: '+(data.error||'Unknown error'),'error');
+      resetRegBio();
+    }
+  }catch(err){
+    box.classList.remove('scan');
+    if(err.name==='NotAllowedError')setSt('r-status','Scan cancelled. Tap to try again.','error');
+    else if(err.name==='SecurityError')setSt('r-status','[SecurityError] '+err.message,'error');
+    else setSt('r-status',`[${err.name}] ${err.message}`,'error');
+    resetRegBio();
+  }
+}
+function resetRegBio(){
+  document.getElementById('r-bio-btn').disabled=false;
+  document.getElementById('r-box').classList.remove('scan');
+  document.getElementById('r-bio-txt').textContent='🔐 Register Fingerprint / Face ID';
+  document.getElementById('r-bio-sp').classList.remove('show');
+  document.getElementById('r-box-ico').textContent='👆';
+  document.getElementById('r-box-ttl').textContent='Tap to register';
+  document.getElementById('r-box-dsc').textContent='Uses the biometric set up on your device';
+}
+
+// ─────────────────────────────────────────────────────────────
+// UTILS
+// ─────────────────────────────────────────────────────────────
+function enc(v){return encodeURIComponent(v);}
+function now(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+function arrToB64(buf){
+  if(!buf||buf.byteLength===0)return'';
+  const bytes=new Uint8Array(buf);let b='';
+  for(let i=0;i<bytes.byteLength;i++)b+=String.fromCharCode(bytes[i]);
+  return btoa(b).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+function b64toArr(b64){
+  const bin=atob(b64.replace(/-/g,'+').replace(/_/g,'/'));
+  return new Uint8Array([...bin].map(c=>c.charCodeAt(0)));
+}
+
+// Enter key on login
+document.getElementById('l-uid').addEventListener('keydown',e=>{if(e.key==='Enter')loginCheck();});
+
+// Biometric support check
+if(!window.PublicKeyCredential){
+  setSt('l-status','⚠️ Biometric auth not supported. Use Chrome on Android or Safari on iPhone.','warn');
+}
+</script>
+</body>
+</html>
