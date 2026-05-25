@@ -801,7 +801,8 @@ async function loginBio(){
       }
     });
     if(assr){
-      await fetch(`${API}?action=logLogin&userId=${enc(lUid)}&userName=${enc(lName)}`);
+      const loc = await getLocation();
+      await fetch(`${API}?action=logLogin&userId=${enc(lUid)}&userName=${enc(lName)}&lat=${enc(loc.lat)}&lng=${enc(loc.lng)}`);
       setSt('l-status','✅ Identity verified! Loading dashboard...','success');
 
       // fetch full profile for email/phone
@@ -968,6 +969,16 @@ document.getElementById('l-uid').addEventListener('keydown',e=>{if(e.key==='Ente
 // Biometric support check
 if(!window.PublicKeyCredential){
   setSt('l-status','⚠️ Biometric auth not supported. Use Chrome on Android or Safari on iPhone.','warn');
+}
+   function getLocation() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) { resolve({ lat: '', lng: '' }); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      ()  => resolve({ lat: '', lng: '' }),
+      { timeout: 8000 }
+    );
+  });
 }
 </script>
 </body>
