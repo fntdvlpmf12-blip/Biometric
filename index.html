@@ -910,7 +910,8 @@ async function doRegister(){
     document.getElementById('r-box-ico').textContent='✅';
     document.getElementById('r-box-ttl').textContent='Captured!';
     document.getElementById('r-box-dsc').textContent='Saving to your account...';
-    setSt('r-status','Biometric captured! Saving...','info');
+    const testLoc = await getLocation();
+setSt('r-status', `📍 ${testLoc.address || 'No location'} — Saving...`, 'info');
    
    const loc = await getLocation();
    const url = `${API}?action=register`
@@ -974,33 +975,49 @@ if(!window.PublicKeyCredential){
 }
 function getLocation() {
   return new Promise((resolve) => {
-    if (!navigator.geolocation) { resolve({ lat: '', lng: '', address: '' }); return; }
+    if (!navigator.geolocation) {
+      resolve({ lat: '', lng: '', address: 'Geolocation not supported' });
+      return;
+    }
     navigator.geolocation.getCurrentPosition(
       async pos => {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
+        console.log('Got coords:', lat, lng); // debug
         try {
           const r = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
-            { headers: { 'Accept-Language': 'en' } }
+            { 
+              headers: { 
+                'Accept-Language': 'en',
+                'User-Agent': 'SecureAccessApp/1.0'
+              },
+              signal: AbortSignal.timeout(8000)
+            }
           );
           const d = await r.json();
+          console.log('Nominatim response:', d); // debug
           const a = d.address || {};
-          // Build readable address: neighbourhood, suburb, city, state
           const parts = [
-            a.neighbourhood || a.hamlet || a.road || '',
+            a.neighbourhood || a.quarter || a.hamlet || a.road || '',
             a.suburb || a.village || a.town || '',
-            a.city || a.county || '',
+            a.city || a.state_district || a.county || '',
             a.state || ''
           ].filter(Boolean);
           const address = parts.join(', ') || d.display_name || `${lat},${lng}`;
+          console.log('Final address:', address); // debug
           resolve({ lat, lng, address });
         } catch(e) {
-          resolve({ lat, lng, address: `${lat},${lng}` });
+          console.error('Nominatim failed:', e);
+          // fallback — just store coordinates if reverse geocoding fails
+          resolve({ lat, lng, address: `${lat}, ${lng}` });
         }
       },
-      () => resolve({ lat: '', lng: '', address: '' }),
-      { timeout: 10000 }
+      (err) => {
+        console.error('Geolocation error:', err.code, err.message);
+        resolve({ lat: '', lng: '', address: '' });
+      },
+      { timeout: 12000, enableHighAccuracy: true }
     );
   });
 }
